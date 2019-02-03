@@ -233,6 +233,7 @@ text(365+365+365+365+(365/2),0,labels = "2019년도")
 ```{r, r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
 # REC Data Read
 rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
+rec_raw_length <- nrow(rec_raw)
 rec_raw$sale_date <- as.Date(rec_raw$sale_date)
 library(dplyr)
 rec_monthly  <- as.data.frame(matrix(nrow=5,ncol=14))
@@ -278,10 +279,20 @@ rec_monthly[monthly_count,14] <- mean(c(rec_monthly[monthly_count,2],rec_monthly
 [REC(신재생에너지 공급인증서,Renewable Engrgy Credit)]
 신재생에너지를 이용하여 에너지를 공급한 사실을 증명하는 인증서입니다. 실제 공급량에 가중치를 곱한 양을 공급량으로 하여 MWh 기준으로 발급됩니다.
 ```
+<br/> 
 
-<br/>  
+#### **3.1 최근 REC 거래현황 **
+  
+##### **[육지]**  
 
-#### **3.1 월별 REC 거래현황 (2016년3월~현재)**
+|  거래일자                     |            거래가격(원/REC)     |        거래물량(REC)           |          비  고           |
+|:-----------------------------:|:-------------------------------:|:------------------------------:|:-------------------------:|   
+| `r rec_raw[rec_raw_length-1,2]` | `r rec_raw[rec_raw_length-1,3]`   | `r rec_raw[rec_raw_length-1,4]`  |                           |
+| `r rec_raw[rec_raw_length,2]` | `r rec_raw[rec_raw_length,3]`   | `r rec_raw[rec_raw_length,4]`  |                           |
+  
+<br/> 
+
+#### **3.2 월별 REC 거래현황 (2016년3월~현재)**
 2016년 3월부터 현재까지 월별 평균 REC 단가 및 실적을 분석하였습니다.  
   
 ##### **[육지]**  
@@ -293,12 +304,15 @@ rec_monthly[monthly_count,14] <- mean(c(rec_monthly[monthly_count,2],rec_monthly
 #print(rc_monthly)
 kable(rec_monthly, digits = 0)
 ```
+
+<br/>   
   
-  
-#### **3.2 REC 차수별 현황 (2016년3월~현재)**  
+#### **3.3 REC 차수별 현황 (2016년3월~현재)**  
 2016년 3월부터 현재까지 REC의 차수별  거래단가와 거래량에 대한 Trend를 분석하였습니다.  
+
   
 ##### **[육지]**
+
 ```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA}
 par(mar = c(5, 4, 4, 6) + 0.1)
 plot(rec_raw[,3], type = "l", pch = 2, col = "blue", axes = FALSE, xlab = "", 
@@ -325,7 +339,6 @@ text((42+78/2),0,labels = "2017년도")
 text((42+78+96/2),0,labels = "2018년도")
 text((42+78+96+78/2),0,labels = "2019년도")
 ```
-
 
   
 ### **4. 공급인증서 발급대상 설비기준**  
