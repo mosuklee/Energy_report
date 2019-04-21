@@ -1,5 +1,5 @@
 ---
-title: <center>**에너지거래단가 실적분석 REPORT**</center>
+title: <center>**에너지관련자료 실적분석 REPORT**</center>
 output:
   html_document:
     smart: false
@@ -32,16 +32,19 @@ weekly_df <- as.data.frame(weekly_df)
 names(weekly_df) <- c("Hour","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
 ```
 ### **1. 개    요**
-본 Report는 한국전력거래소의 I-SMART 에서 제공하는 전력거래 단가 실적중 SMP의 가중치 평균을 Web Crawling이용하여 자료수집 및 분석을 하였으며, REC는 신재생원스톱 사업종별 통합포털의 현물시장 속보를 이용하여 현물시장에서 거래되는 REC의 단가 및 거래량을 분석하였습니다.  
-  
+본 Report는 한국전력거래소의 I-SMART 에서 제공하는 전력거래 단가 실적중 SMP의 가중 평균을 Web Crawling을 이용하여 자료수집 및 분석을 하였으며, REC는 신재생원스톱 사업종별 통합포털의 현물시장 속보를 이용하여 현물시장에서 거래되는 REC의 단가 및 거래량을 분석하였습니다.
+국제유가의 경우 2019년도 1월부터 한국석유공사의 국제유가 현황을 참고하여 매주 마지막일자의 DUBAI/WTI/BRENT유의 국제원유가격을 기준으로 기록하였습니다. 
+
 SMP자료는 2015년도부터 현재까지 월별 거래현황을 분석하여 나타내었으며, 최근 1주일간 시간대별 SMP의 거래가격등을 분석하였습니다.
 REC는 2016년 3월부터 현재까지 월별 거래현황을 분석하였으며, 거래단가의 허수를 검토/판단하기 위하여 거래량까지 그래프로 분석하여 나타내었습니다.  
   
-SMP의 경우 거래량을 전량 판매가 가능한 시스템으로 되어 있으나, 현물시장에서 REC의 경우 발전사인 구매자와 발전사업자인 판매자의 사이에서 거래가 이루어지므로 판매단가가 어느정도 유지되더라도 거래량이 적을 수 있으므로 특히 사업을 준비하거나 경제성분석을 하고자 하는 신중할 필요성이 있습니다.  
+SMP의 경우 거래량을 전량 판매가 가능한 시스템으로 되어 있으나, 현물시장에서 REC의 경우 발전사인 구매자와 발전사업자인 판매자의 사이에서 거래가 이루어지므로 판매단가가 어느정도 유지되더라도 거래량이 적을 수 있으므로 특히 사업을 준비하거나 경제성분석을 하고자 하는 경우에는 신중할 필요성이 있습니다.  
   
 PF사업의 경우 대부분 대규모 사업을 계획하고 있으므로 계약시장을 겨냥하여 사업성분석을 하여야 하므로 현물시장으로 단가를 분석할 경우 실제 거래시 문제가 될 수 있으므로 반드시 유사프로젝트의 장기 계약현황등을 분석한 후에 경제성분석을 하는 것이 좋습니다.
 필자의 경험에서 볼때 현물시장가의 90% 미만대에서 가격이  형성되는 것을 볼 수 있었습니다.  
-  
+
+
+
 <br/>
   
 ### **2. SMP 실적분석**  
@@ -62,7 +65,7 @@ SMP가격은 한전에서 전기를 매입하는 가격으로 발전량에 비�
 #pander::pandoc.table(weekly_df)
 library(knitr)
 # 과거 1주일간 시간당 SMP 값 출력
-kable(weekly_df)
+kable(weekly_df[25:27,1:8],row.names = FALSE)
 ```
 ```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
 #library(XML)
@@ -230,6 +233,167 @@ text(365+365+365+(365/2),0,labels = "2018년도")
 text(365+365+365+365+(365/2),0,labels = "2019년도")
 
 ```
+
+```{python echo=FALSE}
+# pdf parsing program (2019/04/14)
+
+########################################################################
+# (1) 신재성에너지원스톱의 REC 거래실적 pdf파일을 찾아서 Download한다. #
+########################################################################
+import pandas as pd
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import urllib.request
+
+# Web driver를 가상브라우져에 뛰우기 -----(1)
+browser = webdriver.Chrome ("C:/webdriver/chromedriver")
+# 3초 대기하기 ----(2)
+browser.implicitly_wait(3)
+
+
+# 처음 신재생에너지원스톱 오늘의 REC시장 목록 웹으로 들어간다.
+url = 'http://onerec.kmos.kr/portal/selectBbsNttList.do?bbsNo=477&key=1970'
+browser.get(url)
+
+# 오늘의 REC시장 목록웹 브라우져를 모두 파싱한다.
+html = browser.page_source
+soup = BeautifulSoup(html, 'html.parser')
+
+# 목록의 최근 목록에 접근하여 목록으로 들어갈 수 있는 주로를 찾아낸다.
+items = soup.find_all('td','taL')
+item  = items[0].find('a')['href']
+url_1 = 'http://onerec.kmos.kr/portal' + item[1:-1]
+
+# 최신 목록의 게시물로 들어가서 브라우져를 모두 파싱한다.
+browser.get(url_1)
+html = browser.page_source
+soup = BeautifulSoup(html, 'html.parser')
+
+# 최신 게시물로 들어가서 저자된 파일 주로를 가져온다.
+file = soup.find("tbody")
+file_temp = file.find("a")
+
+# 파일주소 추출
+file = file_temp['href']
+
+# 파일이름 추출
+file_name =file_temp.text
+
+# 파일주소
+file_url = 'http://onerec.kmos.kr' + file
+
+# 파일로 저장한다.
+savename = './' + file_name
+urllib.request.urlretrieve(file_url, savename)
+
+########################################################################
+# (2) Download 받은 pdf파일을 열고 parsing하여 DataFrame에 저장한다.   #
+########################################################################
+from tabula import wrapper
+#import pandas as pd
+from datetime import datetime
+import datetime
+file_name = file_name.replace(' ',"")
+
+# 날자데이터 추출
+rec_data = wrapper.read_pdf(file_name, spreadsheet=True, area=(200, 40, 472.85, 120))
+rec_data.columns = ["sale_date"]
+rec_data.iloc[0,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
+rec_data.iloc[1,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
+
+#import datetime
+rec_data.iloc[0,0] = datetime.datetime.strptime(rec_data.iloc[0,0], '%Y-%m-%d').date()
+rec_data.iloc[1,0] = datetime.datetime.strptime(rec_data.iloc[1,0], '%Y-%m-%d').date()
+
+# 거래물량 추출
+df1 = wrapper.read_pdf(file_name, spreadsheet=True, area=(260, 425, 472.85, 640))
+try:
+    df1 = df1.fillna(0)
+except ValueError:
+    df1=df1
+
+# 거래단가 추출    
+df2 = wrapper.read_pdf(file_name, spreadsheet=True, area=(600, 115, 650, 640))
+
+# 값이 들어오면 "-"를 0으로 인식하고 ','를 제거하여 Float 숫자값으로 변환하는 함수
+def change_num(value):
+    if (isinstance(value, str)):
+        if value == '-' :
+            value= value.replace('-',"0")
+        value= value.replace('-',"")
+        value=value.replace(',',"")
+        value=value.replace(' ',"")
+    try:
+        return float(int(value))
+    except ValueError:
+        return float(value)
+    else :
+        return float(value)
+    
+# End of Function  
+
+# 테이블의 문자를 숫자로 변환한다.
+for i in range(0,5):
+    df1.iloc[i,0] = change_num(df1.iloc[i,0])
+    df1.iloc[i,1] = change_num(df1.iloc[i,1])
+
+for i in range(0,4):
+    df2.iloc[0,i] = change_num(df2.iloc[0,i])
+    
+# 데이터를 Table로 만든다.
+rec_data['land']=[df2.iloc[0,0],df2.iloc[0,2]]
+rec_data['sale_land']=[df1.iloc[0,1],df1.iloc[3,1]]
+rec_data['jeju']=[df2.iloc[0,1],df2.iloc[0,3]]
+rec_data['sale_jeju']=[df1.iloc[1,1],df1.iloc[4,1]]
+rec_data['count'] = 0
+rec_data = pd.DataFrame(rec_data,columns=['count','sale_date','land','sale_land','jeju','sale_jeju'])
+rec_data=rec_data.reindex(index = [1,0])
+
+
+#############################################################################################
+# (3) 저장된 DataFrame을 사용 용도에 맞추어 가공후 DataFrame을 만들어 CSV파일로 저장한다.   #
+#############################################################################################
+outputfile ="./rec_temp.csv"
+rec_data.to_csv(outputfile, encoding='UTF-8', index=False)
+browser.quit()
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#############################################################################################
+# (4) 저장된 CSV파일을 읽어 최근자료와 비교한 후 최신자료이면 추가로 자료를 붙인다.         #
+#############################################################################################
+
+# 저장된 금주파일(rec_temp.csv)과 기존파일(rec_price1.csv)을 읽는다
+date_chk <- read.table("./rec_temp.csv", sep=",",head=TRUE, na.strings = "")
+date_chk1 <- read.table("./rec_price1.csv", sep=",",head=TRUE, na.strings = "")
+
+# 읽은 파일의 Data형태를 변경한 후 Dataframe으로 만든다.
+rec_price_count <- as.numeric(date_chk$count)
+rec_price_sale_date <- as.character(date_chk$sale_date)
+rec_price_land <- as.numeric(date_chk$land)
+rec_price_sale_land <- as.numeric(date_chk$sale_land)
+rec_price_jeju <- as.numeric(date_chk$jeju)
+rec_price_sale_jeju <- as.numeric(date_chk$sale_jeju)
+
+rec_price_today <- as.data.frame(cbind(rec_price_count,rec_price_sale_date, rec_price_land, rec_price_sale_land, rec_price_jeju, rec_price_sale_jeju))
+
+# 기존파일의 마지막 판매일자를 읽어와 Data형태로 저장(rec_raw)한다.
+rec_raw <- as.Date(as.vector(date_chk1$sale_date)[length(date_chk1$sale_date)],format="%Y-%m-%d")
+
+# 기존 저장된 파일의 마지막 판매일자와 최근 판매일자를 비교하여 최신자료이면 Append하고 기존자료와 같으면 Skip한다.
+
+
+if (rec_raw < as.Date(rec_price_today[[2]][1],format="%Y-%m-%d")) {
+       write.table(rec_price_today[1,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+       write.table(rec_price_today[2,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+} else {
+  if (rec_raw < as.Date(rec_price_today[[2]][2],format="%Y-%m-%d")) {
+    write.table(rec_price_today[2,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+}    
+}
+
+```
+
 ```{r, r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
 # REC Data Read
 rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
