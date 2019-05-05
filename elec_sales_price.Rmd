@@ -22,6 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 ```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
 # 전력거래소에서 SMP를 Scrapping 한다.
+#install.packages("stringi",type="win.binary")
 library(XML)
 area <- 'land'
 to_day <- gsub("-","",as.character(Sys.Date()))
@@ -30,6 +31,7 @@ weekly_df = paste(url,'&status=',area,'&issueDate=',to_day,sep='')
 weekly_df <- readHTMLTable(weekly_df, header=T)
 weekly_df <- as.data.frame(weekly_df)
 names(weekly_df) <- c("Hour","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
+#weekly_df[25:27,1:8]
 ```
 ### **1. 개    요**
 본 Report는 한국전력거래소의 I-SMART 에서 제공하는 전력거래 단가 실적중 SMP의 가중 평균을 Web Crawling을 이용하여 자료수집 및 분석을 하였으며, REC는 신재생원스톱 사업종별 통합포털의 현물시장 속보를 이용하여 현물시장에서 거래되는 REC의 단가 및 거래량을 분석하였습니다.
