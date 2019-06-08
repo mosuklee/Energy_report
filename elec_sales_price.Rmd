@@ -45,6 +45,8 @@ SMP의 경우 거래량을 전량 판매가 가능한 시스템으로 되어 있
 PF사업의 경우 대부분 대규모 사업을 계획하고 있으므로 계약시장을 겨냥하여 사업성분석을 하여야 하므로 현물시장으로 단가를 분석할 경우 실제 거래시 문제가 될 수 있으므로 반드시 유사프로젝트의 장기 계약현황등을 분석한 후에 경제성분석을 하는 것이 좋습니다.
 필자의 경험에서 볼때 현물시장가의 90% 미만대에서 가격이  형성되는 것을 볼 수 있었습니다.  
 
+최근 에너지관련 기사를 형태소분석을 통하여 워드 클라우드 형태로 표현하였습니다. 최근에 가장 많이 ISSEUD된 단어를 살펴봄으로서 현재 에너지의 방향을 조금이라도 이해할 수 있도록 하였습니다.  
+
 
 
 <br/>
@@ -651,3 +653,80 @@ text(13+13+13/2,-1,labels = "3Q")
 text(13+13+13+13/2,-1,labels = "4Q")
 
 ```
+<br/>
+  
+### **6. Word Cloud**
+```{}
+최근 각 언론사별 에너지관련 기사를 분석하여 최근 ISSUED된 단어를 분석하였습니다. 
+```
+  
+```{python echo=FALSE,message=FALSE,warning=FALSE,comment=NA,results="hide"}
+
+# 에너지관련 뉴스링크 수집 (구글rss이용)
+import feedparser
+#  구글 search "에너지"
+feeds = feedparser.parse('https://news.google.com/rss/search?q=%EC%97%90%EB%84%88%EC%A7%80&hl=ko&gl=KR&ceid=KR:ko')
+links = [entry['link'] for entry in feeds['entries']]
+links = links[1:100]
+
+# 뉴스 본문수집 
+import newspaper
+import time
+news_text =''
+i = 0
+for link in links:
+    i= 1 + i
+    article = newspaper.Article(link, language='ko')
+    article.download()
+    article.parse()
+    news_text += article.text
+    time.sleep(0.2)
+    if i==100:
+       break
+    
+# 형태소 분석 
+from konlpy.tag import Okt; t=Okt()
+tokens_ko = t.nouns(news_text)
+
+# 1글자로 된 단어는 의미 없다 판단하고 삭제 
+tokens_ko = [n for n in tokens_ko if len(n) > 1]
+
+
+# 분석에 불필요한 단어 삭제 
+stop_words = ['에너지','분야','통해','위해','라며','한국',"사업",'대한','연합뉴스']
+tokens_ko = [each_word for each_word in tokens_ko if each_word not in stop_words]
+
+
+import nltk
+ko = nltk.Text(tokens_ko)
+
+# 분석된 형태소를 빈도수별 그래프로 그리기 
+import matplotlib.pyplot as plt
+
+# 그래프에 한글 사용하기
+from matplotlib import font_manager, rc
+#plt.rcParams['axes.unicode_minus'] = False
+path ="c:/Windows/Fonts/malgun.ttf"
+font_name = font_manager.FontProperties(fname=path).get_name()
+rc('font', family = font_name)
+
+from wordcloud import WordCloud,STOPWORDS
+
+data = ko.vocab().most_common(150)
+
+wordcloud = WordCloud(font_path ='c:\Windows\Fonts/malgun.ttf',
+                      relative_scaling = 0.2,
+                      background_color ='white',
+                     ).generate_from_frequencies(dict(data))
+plt.figure(figsize=(24,12))
+plt.imshow(wordcloud)
+plt.axis('off')
+#plt.show()
+plt.savefig('wordcloud.jpg')
+
+```
+
+<br/>
+
+#### **6.1 "에너지" 관련기사 분석 **  
+<center><img src="./wordcloud.jpg" width=100% height=100%></center>
