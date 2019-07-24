@@ -1,0 +1,862 @@
+---
+title: <center>**에너지가격 실적분석**</center>
+author : "MSLEE(mosuklee@gmail.com)"
+date : "`r Sys.Date()`"
+
+
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+    toc: false
+    toc_depth: 3
+    number_sections: false
+    
+  tufte::tufte_handout: default
+  tufte::tufte_html: default
+fontsize : 12pt
+mainfont: NanumGothic
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(kableExtra)
+```
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+# 전력거래소에서 SMP를 Scrapping 한다.
+#install.packages("stringi",type="win.binary")
+library(XML)
+area <- 'land'
+to_day <- gsub("-","",as.character(Sys.Date()))
+url ='http://www.kpx.or.kr/www/contents.do?key=225';
+weekly_df = paste(url,'&status=',area,'&issueDate=',to_day,sep='')
+weekly_df <- readHTMLTable(weekly_df, header=T)
+weekly_df <- as.data.frame(weekly_df)
+names(weekly_df) <- c("Hour","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
+#weekly_df[25:27,1:8]
+```
+### **1. 개    요**
+본 Report는 한국전력거래소의 I-SMART 에서 제공하는 전력거래 단가 실적중 SMP의 가중 평균을 Web Crawling을 이용하여 자료수집 및 분석을 하였으며, REC는 신재생원스톱 사업종별 통합포털의 현물시장 속보를 이용하여 현물시장에서 거래되는 REC의 단가 및 거래량을 분석하였습니다.
+국제유가의 경우 2019년도 1월부터 한국석유공사의 국제유가 현황을 참고하여 매주 마지막일자의 DUBAI/WTI/BRENT유의 국제원유가격을 기준으로 기록하였습니다.
+
+SMP자료는 2015년도부터 현재까지 월별 거래현황을 분석하여 나타내었으며, 최근 1주일간 시간대별 SMP의 거래가격등을 분석하였습니다.
+REC는 2016년 3월부터 현재까지 월별 거래현황을 분석하였으며, 거래단가의 허수를 검토/판단하기 위하여 거래량까지 그래프로 분석하여 나타내었습니다.  
+  
+SMP의 경우 거래량을 전량 판매가 가능한 시스템으로 되어 있으나, 현물시장에서 REC의 경우 발전사인 구매자와 발전사업자인 판매자의 사이에서 거래가 이루어지므로 판매단가가 어느정도 유지되더라도 거래량이 적을 수 있으므로 특히 사업을 준비하거나 경제성분석을 하고자 하는 경우에는 신중할 필요성이 있습니다.  
+  
+PF사업의 경우 대부분 대규모 사업을 계획하고 있으므로 계약시장을 겨냥하여 사업성분석을 하여야 하므로 현물시장으로 단가를 분석할 경우 실제 거래시 문제가 될 수 있으므로 반드시 유사프로젝트의 장기 계약현황등을 분석한 후에 경제성분석을 하는 것이 좋습니다.
+필자의 경험에서 볼때 현물시장가의 90% 미만대에서 가격이  형성되는 것을 볼 수 있었습니다.  
+
+최근 에너지관련 기사를 형태소분석을 통하여 워드 클라우드 형태로 표현하였습니다. 최근에 가장 많이 ISSUED된 단어를 살펴봄으로서 현재 에너지의 방향을 조금이라도 이해할 수 있도록 하였습니다.  
+
+
+
+<br/>
+  
+### **2. SMP 실적분석**  
+[SMP(계통한계가격, System Marginal Price)]
+SMP는 각 시간대별 수요를 충족시키기 위하여 발전이 할당된 발전기별 발전가격(변동비) 중 가장 비싼 값을 뜻합니다. 모든 발전기는 발전에 대한 대가로 동일하게 이 가격을 적용 받게 됩니다.  
+SMP가격은 한전에서 전기를 매입하는 가격으로 발전량에 비례하여 모든 사업자가 동일한 단가를 적용 받아 수익을 창출합니다.
+
+\newpage
+
+#### **2.1 최근 일별 SMP 현황**
+최근 1주일간의 시간대별 SMP 분석자료이며 각 일별 최대.최소.값을 분석하였으며, 일별 가중평균 값을 분석하였습니다.  
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA,tabel,results='asis'}
+#install.packages("pander")
+#library(pander)
+#pander::pandoc.table(weekly_df)
+library(knitr)
+# 과거 1주일간 시간당 SMP 값 출력
+kable(weekly_df[25:27,1:8],row.names = FALSE,"latex",booktabs = T, align = "l") %>%
+  kable_styling(full_width = F,position="left") %>%
+  column_spec(1, width = "17em")
+
+```
+
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#library(XML)
+# 저장된 SMP 값을 읽은 후 맨 마지막 날자를 추출한다.
+smp_old <- read.table("./smp_raw.csv", sep=",",head=TRUE)
+smp_old_count <- length(smp_old[,2])
+smp_old_last <- smp_old[smp_old_count,2]
+start_date <- as.Date(smp_old_last, origin="1970-01-01")+1
+#start_date <- "2017-10-01"  # Limits = 2015-01-01
+#start_date <- as.Date(start_date)
+#smp_date <- start_date
+day_count <- as.numeric(Sys.Date() - start_date)
+if (day_count>1) {
+    smp_day <- c(1:day_count)
+    smp_day <- data.frame(smp_day)
+    smp_day[,1] <- NA
+} else {
+    smp_day <- c(1)
+    smp_day <- data.frame(smp_day)
+    smp_day[,1] <- NA
+}
+# 오늘까지 검색
+end_date <- Sys.Date()
+# 저장된 SMP 값의 맨 마지막 날짜 다음날 부터 가중평균값을 추출한다.
+i <- 1
+area <- 'land'
+for (smp_date in start_date : end_date) {
+     smp_date <- as.Date(smp_date, origin="1970-01-01")
+     seek_date <- gsub("-","",as.character(smp_date))
+     url ='http://www.kpx.or.kr/www/contents.do?key=225';
+     df = paste(url,'&status=',area,'&issueDate=',seek_date,sep='')
+     df <- readHTMLTable(df, header=T)
+     df <- as.data.frame(df)
+     df[,8] <-sapply(df[, 8], function(a){as.numeric(as.character(a))})
+     #가중평균 추출
+     smp_day[i,1] <- df[27,8]
+     smp_day[i,2] <- smp_date
+     i <- i+1
+}
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+if (day_count>0) {
+  write.table(smp_day,"./smp_raw.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+  }
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+smp_day <- read.table("./smp_raw.csv", sep=",",head=FALSE)
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#install.packages("dplyr")
+library(dplyr)
+#names(smp_day) < c("smp"","num_dat"")
+smp_avg_monthly <- as.data.frame(matrix(nrow=6,ncol=14))
+names(smp_avg_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
+smp_avg_monthly$year <- c("2015","2016","2017","2018","2019","avg")
+monthly_year <- 2015
+for (monthly_count in 1:12 ) {
+   #monthly_count <- 12
+   avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
+   avg_col <- monthly_count+1
+   if (monthly_count == 12) {
+      monthly_year <- monthly_year+1
+      monthly_count <- 0
+      avg_col <- 13
+   }
+   avg_end <- unclass(as.Date(paste0(monthly_year,"-",monthly_count+1,"-","01")))
+   monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
+   smp_avg_monthly[1,avg_col] <- round(mean(monthly_df[,1]),digits=2)
+}
+monthly_year <- 2016
+for (monthly_count in 1:12 ) {
+   #monthly_count <- 12
+   avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
+   avg_col <- monthly_count+1
+   if (monthly_count == 12) {
+      monthly_year <- monthly_year+1
+      monthly_count <- 0
+      avg_col <- 13
+   }
+   avg_end <- unclass(as.Date(paste0(monthly_year,"-",monthly_count+1,"-","01")))
+   monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
+   smp_avg_monthly[2,avg_col] <- round(mean(monthly_df[,1]), digits=2)
+}
+monthly_year <- 2017
+for (monthly_count in 1:12 ) {
+   #monthly_count <- 12
+   avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
+   avg_col <- monthly_count+1
+   if (monthly_count == 12) {
+      monthly_year <- monthly_year+1
+      monthly_count <- 0
+      avg_col <- 13
+   }
+   avg_end <- unclass(as.Date(paste0(monthly_year,"-",monthly_count+1,"-","01")))
+   monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
+   smp_avg_monthly[3,avg_col] <- round(mean(monthly_df[,1]), digits=2)
+}
+monthly_year <- 2018
+for (monthly_count in 1:12 ) {
+   #monthly_count <- 12
+   avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
+   avg_col <- monthly_count+1
+   if (monthly_count == 12) {
+      monthly_year <- monthly_year+1
+      monthly_count <- 0
+      avg_col <- 13
+   }
+   avg_end <- unclass(as.Date(paste0(monthly_year,"-",monthly_count+1,"-","01")))
+   monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
+   smp_avg_monthly[4,avg_col] <- round(mean(monthly_df[,1]), digits=2)
+}
+monthly_year <- 2019
+monthly_count_end <- as.numeric(format(Sys.Date(),"%m"))
+for (monthly_count in 1:monthly_count_end ) {
+   #monthly_count <- 12
+   avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
+   avg_col <- monthly_count+1
+   if (monthly_count == 12) {
+      monthly_year <- monthly_year+1
+      monthly_count <- 0
+      avg_col <- 13
+   }
+   avg_end <- unclass(as.Date(paste0(monthly_year,"-",monthly_count+1,"-","01")))
+   monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
+   smp_avg_monthly[5,avg_col] <- round(mean(monthly_df[,1]), digits=2)
+}
+# 전체 평균값 계산하기
+for (monthly_count in 1:12) {
+    smp_avg_monthly[6,monthly_count+1]  <- mean(smp_avg_monthly[,monthly_count+1],na.rm =TRUE)
+   
+}
+
+for (monthly_count in 1:6) {
+  #monthly_count <- 1   
+  smp_avg_monthly[monthly_count,14] <- mean(c(smp_avg_monthly[monthly_count,2],smp_avg_monthly[monthly_count,3],smp_avg_monthly[monthly_count,4],smp_avg_monthly[monthly_count,5],smp_avg_monthly[monthly_count,6],smp_avg_monthly[monthly_count,7],smp_avg_monthly[monthly_count,8],smp_avg_monthly[monthly_count,9],smp_avg_monthly[monthly_count,10],smp_avg_monthly[monthly_count,11],smp_avg_monthly[monthly_count,12],smp_avg_monthly[monthly_count,13]),na.rm=TRUE)
+}
+```
+
+
+#### **2.2 월별 SMP 현황 (2015년~현재)**  
+년간 월별 평균 SMP 단가를 분석하였으며, 2015년부터 현재까지 월별 평균 단가도 함께 분석하였습니다.  
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#install.packages("pander")
+library(pander)
+#pander::pandoc.table(smp_avg_monthly)
+#print(smp_avg_monthly)
+kable(smp_avg_monthly, digits = 1,"latex",booktabs = T,align = "r") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
+
+```
+  
+#### **2.3 SMP 일별현황 (2015년~현재)**  
+2015년부터 현재까지 SMP 일별 평균 단가의 Trend를 분석하였습니다.
+  
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA,results='hide'}
+
+#그래프를 저장할 경로 및 파일명 입력
+jpeg(width = 1000, height = 500, filename = "smp_trend.jpg")
+
+plot(smp_day[,1],type="l",xlim=c(0,1825), ylim=c(0,200), col="red", ylab="SMP(System Marginal Price) (KRW/kW)",xlab="", xaxt="n")+grid()
+abline(v=365,col="blue",lty=1)
+abline(v=365*2,col="blue",lty=1)
+abline(v=365*3,col="blue",lty=1)
+abline(v=365*4,col="blue",lty=1)
+
+abline()
+text(365/2,0,labels = "2015년")
+text(365+(365/2),0,labels = "2016년")
+text(365+365+(365/2),0,labels = "2017년")
+text(365+365+365+(365/2),0,labels = "2018년")
+text(365+365+365+365+(365/2),0,labels = "2019년")
+
+# 그래픽 device를 off시킨다.
+dev.off()
+```
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA}
+
+library(knitr)
+include_graphics("./smp_trend.jpg")
+
+```
+
+```{python echo=FALSE}
+# pdf parsing program (2019/04/14)
+
+########################################################################
+# (1) 신재성에너지원스톱의 REC 거래실적 pdf파일을 찾아서 Download한다. #
+########################################################################
+import pandas as pd
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import urllib.request
+
+# Web driver를 가상브라우져에 뛰우기 -----(1)
+browser = webdriver.Chrome ("C:/webdriver/chromedriver")
+# 3초 대기하기 ----(2)
+browser.implicitly_wait(3)
+
+
+# 처음 신재생에너지원스톱 오늘의 REC시장 목록 웹으로 들어간다.
+url = 'http://onerec.kmos.kr/portal/selectBbsNttList.do?bbsNo=477&key=1970'
+browser.get(url)
+
+# 오늘의 REC시장 목록웹 브라우져를 모두 파싱한다.
+html = browser.page_source
+soup = BeautifulSoup(html, 'html.parser')
+
+# 목록의 최근 목록에 접근하여 목록으로 들어갈 수 있는 주로를 찾아낸다.
+items = soup.find_all('td','taL')
+item  = items[0].find('a')['href']
+url_1 = 'http://onerec.kmos.kr/portal' + item[1:-1]
+
+# 최신 목록의 게시물로 들어가서 브라우져를 모두 파싱한다.
+browser.get(url_1)
+html = browser.page_source
+soup = BeautifulSoup(html, 'html.parser')
+
+# 최신 게시물로 들어가서 저자된 파일 주로를 가져온다.
+file = soup.find("tbody")
+file_temp = file.find("a")
+
+# 파일주소 추출
+file = file_temp['href']
+
+# 파일이름 추출
+file_name =file_temp.text
+
+# 파일주소
+file_url = 'http://onerec.kmos.kr' + file
+
+# 파일로 저장한다.
+savename = './' + file_name
+urllib.request.urlretrieve(file_url, savename)
+
+########################################################################
+# (2) Download 받은 pdf파일을 열고 parsing하여 DataFrame에 저장한다.   #
+########################################################################
+from tabula import wrapper
+#import pandas as pd
+from datetime import datetime
+import datetime
+file_name = file_name.replace(' ',"")
+
+# 날자데이터 추출
+rec_data = wrapper.read_pdf(file_name, spreadsheet=True, area=(200, 40, 472.85, 120))
+rec_data.columns = ["sale_date"]
+
+rec_data.columns = ["sale_date"]
+if (file_name[0:2] == '20'):
+    rec_data.iloc[0,0] = file_name[0:-12] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[1,0] = file_name[0:-12] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
+else :
+    rec_data.iloc[0,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[1,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
+
+#import datetime
+rec_data.iloc[0,0] = datetime.datetime.strptime(rec_data.iloc[0,0], '%Y-%m-%d').date()
+rec_data.iloc[1,0] = datetime.datetime.strptime(rec_data.iloc[1,0], '%Y-%m-%d').date()
+
+# 거래물량 추출
+df1 = wrapper.read_pdf(file_name, spreadsheet=True, area=(260, 425, 472.85, 640))
+try:
+    df1 = df1.fillna(0)
+except ValueError:
+    df1=df1
+
+# 거래단가 추출    
+df2 = wrapper.read_pdf(file_name, spreadsheet=True, area=(600, 115, 650, 640))
+
+# 값이 들어오면 "-"를 0으로 인식하고 ','를 제거하여 Float 숫자값으로 변환하는 함수
+def change_num(value):
+    if (isinstance(value, str)):
+        if value == '-' :
+            value= value.replace('-',"0")
+        value= value.replace('-',"")
+        value=value.replace(',',"")
+        value=value.replace(' ',"")
+    try:
+        return float(int(value))
+    except ValueError:
+        return float(value)
+    else :
+        return float(value)
+    
+# End of Function  
+
+# 테이블의 문자를 숫자로 변환한다.
+for i in range(0,5):
+    df1.iloc[i,0] = change_num(df1.iloc[i,0])
+    df1.iloc[i,1] = change_num(df1.iloc[i,1])
+
+for i in range(0,4):
+    df2.iloc[0,i] = change_num(df2.iloc[0,i])
+    
+# 데이터를 Table로 만든다.
+rec_data['land']=[df2.iloc[0,0],df2.iloc[0,2]]
+rec_data['sale_land']=[df1.iloc[0,1],df1.iloc[3,1]]
+rec_data['jeju']=[df2.iloc[0,1],df2.iloc[0,3]]
+rec_data['sale_jeju']=[df1.iloc[1,1],df1.iloc[4,1]]
+rec_data['count'] = 0
+rec_data = pd.DataFrame(rec_data,columns=['count','sale_date','land','sale_land','jeju','sale_jeju'])
+rec_data=rec_data.reindex(index = [1,0])
+
+
+#############################################################################################
+# (3) 저장된 DataFrame을 사용 용도에 맞추어 가공후 DataFrame을 만들어 CSV파일로 저장한다.   #
+#############################################################################################
+outputfile ="./rec_temp.csv"
+rec_data.to_csv(outputfile, encoding='UTF-8', index=False)
+browser.quit()
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#############################################################################################
+# (4) 저장된 CSV파일을 읽어 최근자료와 비교한 후 최신자료이면 추가로 자료를 붙인다.         #
+#############################################################################################
+
+# 저장된 금주파일(rec_temp.csv)과 기존파일(rec_price1.csv)을 읽는다
+date_chk <- read.table("./rec_temp.csv", sep=",",head=TRUE, na.strings = "")
+date_chk1 <- read.table("./rec_price1.csv", sep=",",head=TRUE, na.strings = "")
+
+# 읽은 파일의 Data형태를 변경한 후 Dataframe으로 만든다.
+rec_price_count <- as.numeric(date_chk$count)
+rec_price_sale_date <- as.character(date_chk$sale_date)
+rec_price_land <- as.numeric(date_chk$land)
+rec_price_sale_land <- as.numeric(date_chk$sale_land)
+rec_price_jeju <- as.numeric(date_chk$jeju)
+rec_price_sale_jeju <- as.numeric(date_chk$sale_jeju)
+
+rec_price_today <- as.data.frame(cbind(rec_price_count,rec_price_sale_date, rec_price_land, rec_price_sale_land, rec_price_jeju, rec_price_sale_jeju))
+
+# 기존파일의 마지막 판매일자를 읽어와 Data형태로 저장(rec_raw)한다.
+rec_raw <- as.Date(as.vector(date_chk1$sale_date)[length(date_chk1$sale_date)],format="%Y-%m-%d")
+
+# 기존 저장된 파일의 마지막 판매일자와 최근 판매일자를 비교하여 최신자료이면 Append하고 기존자료와 같으면 Skip한다.
+
+
+if (rec_raw < as.Date(rec_price_today[[2]][1],format="%Y-%m-%d")) {
+       write.table(rec_price_today[1,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+       write.table(rec_price_today[2,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+} else {
+  if (rec_raw < as.Date(rec_price_today[[2]][2],format="%Y-%m-%d")) {
+    write.table(rec_price_today[2,1:6],"./rec_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+}    
+}
+
+```
+
+```{r, r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+# REC Data Read
+rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
+rec_raw_length <- nrow(rec_raw)
+rec_raw$sale_date <- as.Date(rec_raw$sale_date)
+library(dplyr)
+rec_monthly  <- as.data.frame(matrix(nrow=5,ncol=14))
+names(rec_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
+rec_monthly$year <- c("2016","2017","2018","2019","avg")
+p_temp <- as.POSIXlt(Sys.Date())
+now_year_temp <- p_temp$year+1900
+now_month_temp <- p_temp$mon+1
+for(i in 2016:now_year_temp) {
+if (i==2016) {
+    start_date_temp <- 3
+} else {
+  start_date_temp <- 1
+}
+  
+for(j in start_date_temp:12) {
+year_temp <-  i
+month_temp <- j
+if(month_temp < 10) {
+  month_temp <- paste("0",month_temp,sep="")
+}
+start_date <- as.Date(paste(year_temp,month_temp,"01",sep="-"))
+if(j<12) {
+end_date <- as.Date(paste(year_temp,as.numeric(month_temp)+1,"01",sep="-"))
+} else {
+end_date <- as.Date(paste(year_temp+1,"01","01",sep="-"))  
+}
+rec_temp <- filter(rec_raw, sale_date >= start_date, sale_date < end_date)
+col_temp <- as.numeric(year_temp) - 2015
+row_temp <- as.numeric(month_temp) +1
+rec_monthly[col_temp,row_temp] <- round(mean(rec_temp[,3]), digits=2)
+  }
+}
+for(i in 1:12){
+    rec_monthly[5,i+1] <- mean(rec_monthly[,i+1],na.rm =TRUE)
+}
+for (monthly_count in 1:5) {
+rec_monthly[monthly_count,14] <- mean(c(rec_monthly[monthly_count,2],rec_monthly[monthly_count,3],rec_monthly[monthly_count,4],rec_monthly[monthly_count,5],rec_monthly[monthly_count,6],rec_monthly[monthly_count,7],rec_monthly[monthly_count,8],rec_monthly[monthly_count,9],rec_monthly[monthly_count,10],rec_monthly[monthly_count,11],rec_monthly[monthly_count,12],rec_monthly[monthly_count,13]),na.rm=TRUE)    
+}
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+# REC Data Read
+rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
+rec_raw_length <- nrow(rec_raw)
+rec_raw$sale_date <- as.Date(rec_raw$sale_date)
+library(dplyr)
+rec_monthly  <- as.data.frame(matrix(nrow=5,ncol=14))
+names(rec_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
+rec_monthly$year <- c("2016","2017","2018","2019","avg")
+p_temp <- as.POSIXlt(Sys.Date())
+now_year_temp <- p_temp$year+1900
+now_month_temp <- p_temp$mon+1
+for(i in 2016:now_year_temp) {
+if (i==2016) {
+    start_date_temp <- 3
+} else {
+  start_date_temp <- 1
+}
+  
+for(j in start_date_temp:12) {
+year_temp <-  i
+month_temp <- j
+if(month_temp < 10) {
+  month_temp <- paste("0",month_temp,sep="")
+}
+start_date <- as.Date(paste(year_temp,month_temp,"01",sep="-"))
+if(j<12) {
+end_date <- as.Date(paste(year_temp,as.numeric(month_temp)+1,"01",sep="-"))
+} else {
+end_date <- as.Date(paste(year_temp+1,"01","01",sep="-"))  
+}
+rec_temp <- filter(rec_raw, sale_date >= start_date, sale_date < end_date)
+col_temp <- as.numeric(year_temp) - 2015
+row_temp <- as.numeric(month_temp) +1
+rec_monthly[col_temp,row_temp] <- round(mean(rec_temp[,3]), digits=2)
+  }
+}
+for(i in 1:12){
+    rec_monthly[5,i+1] <- mean(rec_monthly[,i+1],na.rm =TRUE)
+}
+for (monthly_count in 1:5) {
+rec_monthly[monthly_count,14] <- mean(c(rec_monthly[monthly_count,2],rec_monthly[monthly_count,3],rec_monthly[monthly_count,4],rec_monthly[monthly_count,5],rec_monthly[monthly_count,6],rec_monthly[monthly_count,7],rec_monthly[monthly_count,8],rec_monthly[monthly_count,9],rec_monthly[monthly_count,10],rec_monthly[monthly_count,11],rec_monthly[monthly_count,12],rec_monthly[monthly_count,13]),na.rm=TRUE)    
+}
+```
+\newpage
+
+### **3. REC거래실적 분석**  
+[REC(신재생에너지 공급인증서,Renewable Engrgy Credit)]
+신재생에너지를 이용하여 에너지를 공급한 사실을 증명하는 인증서입니다. 실제 공급량에 가중치를 곱한 양을 공급량으로 하여 MWh 기준으로 발급됩니다.
+
+#### **3.1 최근 REC 거래현황 **
+  
+##### **[육지]**  
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+
+table_temp  <- rec_raw[(rec_raw_length-1):rec_raw_length,2:4]
+names(table_temp) <-c("거래일자", "거래가격(원/REC)", "거래물량(REC)")
+
+kable(table_temp,row.names = FALSE,"latex",booktabs = T, align = "c") %>%
+  kable_styling(full_width = F,position="left") %>%
+  column_spec(1, width = "16em") %>%
+  column_spec(2, width = "13em") %>%
+  column_spec(3, width = "13em")
+
+
+```
+
+
+#### **3.2 월별 REC 거래현황 (2016년3월~현재)**
+2016년 3월부터 현재까지 [육지]의 월별 평균 REC 단가 및 실적을 분석하였습니다.  
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+#install.packages("pander")
+#library(pander)
+#pander::pandoc.table(rec_monthly)
+#print(rc_monthly)
+#kable(rec_monthly, digits = 0)
+
+table_temp  <- rec_monthly
+kable(table_temp,row.names = FALSE,digits = 0,"latex",booktabs = T, align = "l") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
+
+```
+  
+#### **3.3 REC 차수별 현황 (2016년3월~현재)**  
+2016년 3월부터 현재까지 [육지]의 REC의 차수별  거래단가와 거래량에 대한 Trend를 분석하였습니다.  
+
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA,results='hide'}
+
+#그래프를 저장할 경로 및 파일명 입력
+jpeg(width = 1000, height = 450, filename = "./rec_trend.jpg")
+
+par(mar = c(5, 4, 4, 6) + 0.1)
+plot(rec_raw[,3], type = "l", pch = 2, col = "blue", axes = FALSE, xlab = "", 
+    ylab = "",xlim=c(0,276),ylim = c(0, 250000))
+axis(side = 2, col = "blue", col.axis = "blue")
+mtext("거래단가(원/REC)", side = 2, line = 2.5,col ="blue")
+box()
+par(new = TRUE)
+plot(rec_raw[,4], type = "h", pch = 1, col = "red", axes = FALSE, xlab = "", 
+    ylab = "",xlim=c(0,276),ylim = c(0, 300000))
+#axis(side = 1, at = 2010:2013, labels = year)
+#mtext("Year", side = 1, line = 2)
+axis(side = 4, col = "red", col.axis = "red")
+mtext("REC 거래량(REC)", side = 4, col = "red", line = 2.5)
+#legend("top", legend = c("REC 거래단가", "REC 거래량"), text.col = c("blue", "red"), pch = c(1,2), col = c("blue", "red"))
+
+abline(v=42,col="black",lty=1)
+abline(v=122,col="black",lty=1)
+abline(v=218,col="black",lty=1)
+
+abline()
+text(42/2,0,labels = "2016년")
+text((42+78/2),0,labels = "2017년")
+text((42+78+96/2),0,labels = "2018년")
+text((42+78+96+78/2),0,labels = "2019년")
+
+# 그래픽 device를 off시킨다.
+dev.off()
+
+```
+
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA}
+
+library(knitr)
+include_graphics("./rec_trend.jpg")
+
+```
+\newpage
+  
+### **4. 공급인증서 발급대상 설비기준**  
+
+[REC 가중치]
+산업통산자원부가 정책의 방향, 환경영향, 온실가스 배출 저감, 발전원가, 기술개발 및 산업활성화에 미치는 영향 등을 고려하여 효율적 발전 등에 이점이 있는 발전소에 혜택을 주는 방식으로 원칙적으로 REC가중치는 3년마다 갱신됩니다.
+아래의 공급인증서 발급대상 설비기준은 2018년 6월 29일 개정된 내용을 기준으로 정리하였습니다.
+
+
+```{r,echo=FALSE, out.width="97%", fig.align='center',message=FALSE,warning=FALSE,comment=NA}
+
+library(knitr)
+include_graphics("./REC_20180629.jpg")
+
+```
+
+\newpage
+  
+### **5. 국제유가 동향**
+
+국제유가 동향은 한국석유공사의 국제유가 현황을 참고하여 DUBAI/WTI/BRENT유를 기준으로 작성하였습니다.
+
+  
+  
+```{python echo=FALSE}
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+from pandas import Series, DataFrame
+import urllib.parse
+import time
+import datetime
+
+browser = webdriver.Chrome ("C:/webdriver/chromedriver")
+browser.implicitly_wait(3)
+url = "http://www.petronet.co.kr/v3/index.jsp"
+browser.get(url)
+
+time.sleep(5)
+
+html = browser.page_source
+soup = BeautifulSoup(html, 'html.parser')
+oil=[]
+oil_value=[]
+
+now_date=soup.find(class_= "date").text.split()
+
+items1=soup.find_all('dl', {'class': "dl_oil_coast"})
+
+oil=items1[0].text.strip('\n')
+oil=oil.split()
+
+oil_value0 = now_date[0]
+oil_value1=float(oil[1])  #dubi
+oil_value2=float(oil[5])  #texas
+oil_value3=float(oil[9])  #Brant
+
+df1  = pd.DataFrame(oil)
+df2  = pd.DataFrame(now_date)
+dft  = pd.concat([df2,df1],axis=0)
+dft = dft.reset_index(drop=True).T
+dft = dft.drop([1,3,4,5,7,8,9,11], axis=1)
+dft.columns =["date","dubai","texas","brent"] 
+
+outputfile ="./oil_temp.csv"
+dft.to_csv(outputfile, encoding='UTF-8', index=False)
+
+browser.quit()
+
+```
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+
+date_chk <- read.table("./oil_temp.csv", sep=",",head=TRUE, na.strings = "")
+date_chk1 <- read.table("./oil_price1.csv", sep=",",head=TRUE, na.strings = "")
+
+
+#today_date <- as.Date('2019-01-26')
+#today_date <- as.Date(date_chk$date,format="%Y-%m-%d")
+oil_price_dubai <- as.numeric(date_chk$dubai)
+oil_price_texas <- as.numeric(date_chk$texas)
+oil_price_brent <- as.numeric(date_chk$brent)
+
+
+
+#to_date<-as.Date(date_chk$date)
+oil_temp <- as.vector(date_chk$date)[length(date_chk$date)]
+oil_temp <- gsub("[.]", "-", oil_temp)
+oil_temp <- as.Date(oil_temp,format="%Y-%m-%d")
+
+oil_raw <- as.Date(as.vector(date_chk1$date)[length(date_chk1$date)],format="%Y-%m-%d")
+
+oil_price_today <- list(oil_temp,oil_price_dubai, oil_price_texas, oil_price_brent)
+
+if (oil_temp != oil_raw) {
+   write.table(oil_price_today,"./oil_price1.csv",sep=",",row.names=FALSE,quote=FALSE,append=TRUE,col.names=FALSE)
+}
+
+```
+
+<br/>  
+
+#### **5.1 국제유가 ($/bbl) **  
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
+
+table_temp  <- date_chk
+
+
+names(table_temp) <-c("기준날짜", "DUBAI", "WTI (NYMEX)", "BRENT (ICE)")
+
+kable(table_temp,row.names = FALSE,"latex",booktabs = T, align = "c") %>%
+  kable_styling(full_width = F,position="left") %>%
+  column_spec(1, width = "10em") %>%
+  column_spec(2, width = "10em") %>%
+  column_spec(3, width = "10em") %>%
+  column_spec(4, width = "10em")
+
+
+
+```
+
+
+  
+<br/>
+
+#### **5.2 국제유가 TREND (2019년 1월~현재) **  
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA,results='hide'}
+
+oil_raw <- read.table("./oil_price1.csv", sep=",",head=TRUE, na.strings = "")
+max_data <- length(oil_raw$date)
+oil_raw1 <- oil_raw[order(oil_raw$date),]
+
+#그래프를 저장할 경로 및 파일명 입력
+jpeg(width = 1000, height = 500, filename = "./oil_trend.jpg")  
+
+plot(oil_raw1[,2],type="l",xlim=c(0,52), ylim=c(0,100), col="red", ylab="OIL PRICE($/bbl)",xlab="2019년",xaxt="n",yaxt="n")
+
+#axis(1, at=1:max_data, lab=oil_raw1$date, cex.axis = 0.7)
+axis(2, cex.axis = 0.7)
+
+legend(x=1, y=100, c("DUBAI","WTI","BRENT"), col= c("red","blue","green"),lty=1,cex = 0.7)
+lines(oil_raw1[,3],type="l", col="blue")
+lines(oil_raw1[,4],type="l", col="green")
+abline(v=13,col="black",lty=2)
+abline(v=26,col="black",lty=2)
+abline(v=39,col="black",lty=2)
+abline(h=50,col="black",lty=2)
+abline(h=55,col="red",lty=2)
+abline(h=60,col="black",lty=2)
+abline(h=65,col="black",lty=2)
+abline(h=70,col="black",lty=2)
+abline()
+text(13/2,-1,labels = "1Q")
+text(13+13/2,-1,labels = "2Q")
+text(13+13+13/2,-1,labels = "3Q")
+text(13+13+13+13/2,-1,labels = "4Q")
+
+# 그래픽 device를 off시킨다.
+dev.off()
+```
+
+
+```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA}
+library(knitr)
+include_graphics("./oil_trend.jpg")
+
+```
+
+\newpage
+  
+### **6. Word Cloud**
+
+최근 각 언론사별 에너지관련 기사를 분석하여 최근 ISSUED된 단어를 분석하였습니다. 
+  
+```{python echo=FALSE,message=FALSE,warning=FALSE,comment=NA,results="hide"}
+
+# 에너지관련 뉴스링크 수집 (구글rss이용)
+import feedparser
+#  구글 search "에너지"
+feeds = feedparser.parse('https://news.google.com/rss/search?q=%EC%97%90%EB%84%88%EC%A7%80&hl=ko&gl=KR&ceid=KR:ko')
+links = [entry['link'] for entry in feeds['entries']]
+links = links[1:100]
+
+
+# 뉴스 본문수집 
+import newspaper
+import time
+news_text =''
+i = 0
+for link in links:
+    i= 1 + i
+    if link[0:22] == "http://www.zdnet.co.kr":
+        link = ""
+    if link[0:18] == "https://newsen.com":
+        link = ""
+    
+    if link != "" :
+        article = newspaper.Article(link, language='ko')
+        article.download()
+        article.parse()
+        news_text += article.text
+    time.sleep(1)
+    if i==100:
+       break
+    
+# 형태소 분석 
+from konlpy.tag import Okt; t=Okt()
+tokens_ko = t.nouns(news_text)
+
+# 1글자로 된 단어는 의미 없다 판단하고 삭제 
+tokens_ko = [n for n in tokens_ko if len(n) > 1]
+
+
+# 분석에 불필요한 단어 삭제 
+stop_words = ['에너지','분야','통해','위해','라며','한국',"사업",'대한','연합뉴스']
+tokens_ko = [each_word for each_word in tokens_ko if each_word not in stop_words]
+
+
+import nltk
+ko = nltk.Text(tokens_ko)
+
+# 분석된 형태소를 빈도수별 그래프로 그리기 
+import matplotlib.pyplot as plt
+
+# 그래프에 한글 사용하기
+from matplotlib import font_manager, rc
+#plt.rcParams['axes.unicode_minus'] = False
+path ="c:/Windows/Fonts/malgun.ttf"
+font_name = font_manager.FontProperties(fname=path).get_name()
+rc('font', family = font_name)
+
+from wordcloud import WordCloud,STOPWORDS
+
+data = ko.vocab().most_common(150)
+
+wordcloud = WordCloud(font_path ='c:\Windows\Fonts/malgun.ttf',
+                      relative_scaling = 0.2,
+                      background_color ='white',
+                     ).generate_from_frequencies(dict(data))
+plt.figure(figsize=(30,15))
+plt.imshow(wordcloud)
+plt.axis('off')
+#plt.show()
+plt.savefig('wordcloud.jpg')
+
+```
+
+<br/>
+
+#### **6.1 "에너지" 관련기사 분석 **  
+  
+```{r echo=FALSE, fig.width=11, fig.height=5,message=FALSE,warning=FALSE,comment=NA}
+library(knitr)
+include_graphics("./wordcloud.jpg")
+```  
+  
