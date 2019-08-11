@@ -322,7 +322,7 @@ from tabula import wrapper
 #import pandas as pd
 from datetime import datetime
 import datetime
-file_name = file_name.replace(' ',"")
+# file_name = file_name.replace(' ',"")
 
 # 날자데이터 추출
 rec_data = wrapper.read_pdf(file_name, spreadsheet=True, area=(200, 40, 472.85, 120))
@@ -330,11 +330,11 @@ rec_data.columns = ["sale_date"]
 
 rec_data.columns = ["sale_date"]
 if (file_name[0:2] == '20'):
-    rec_data.iloc[0,0] = file_name[0:-12] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
-    rec_data.iloc[1,0] = file_name[0:-12] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[0,0] = file_name[0:4] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[1,0] = file_name[0:4] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
 else :
-    rec_data.iloc[0,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
-    rec_data.iloc[1,0] = '20'+file_name[0:-12] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[0,0] = '20'+file_name[0:2] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
+    rec_data.iloc[1,0] = '20'+file_name[0:2] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
 
 #import datetime
 rec_data.iloc[0,0] = datetime.datetime.strptime(rec_data.iloc[0,0], '%Y-%m-%d').date()
@@ -655,6 +655,10 @@ items1=soup.find_all('dl', {'class': "dl_oil_coast"})
 oil=items1[0].text.strip('\n')
 oil=oil.split()
 
+for i in range(1,5) :
+    if oil[i]== "N.A" :
+        oil[i] = 0
+
 oil_value0 = now_date[0]
 oil_value1=float(oil[1])  #dubi
 oil_value2=float(oil[5])  #texas
@@ -690,7 +694,7 @@ oil_price_brent <- as.numeric(date_chk$brent)
 
 #to_date<-as.Date(date_chk$date)
 oil_temp <- as.vector(date_chk$date)[length(date_chk$date)]
-oil_temp <- gsub("[.]", "-", oil_temp)
+oil_temp <- gsub("[.]", "-", oil_temp)  # gsub("찾을것","바꿀것","열지정")
 oil_temp <- as.Date(oil_temp,format="%Y-%m-%d")
 
 oil_raw <- as.Date(as.vector(date_chk1$date)[length(date_chk1$date)],format="%Y-%m-%d")
@@ -794,17 +798,14 @@ import time
 news_text =''
 i = 0
 for link in links:
-    i= 1 + i
-    if link[0:22] == "http://www.zdnet.co.kr":
-        link = ""
-    if link[0:18] == "https://newsen.com":
-        link = ""
-    
-    if link != "" :
+    try:
         article = newspaper.Article(link, language='ko')
         article.download()
         article.parse()
         news_text += article.text
+        
+    except :
+        pass
     time.sleep(1)
     if i==100:
        break
