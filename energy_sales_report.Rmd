@@ -36,7 +36,7 @@ url ='http://www.kpx.or.kr/www/contents.do?key=225';
 weekly_df = paste(url,'&status=',area,'&issueDate=',to_day,sep='')
 weekly_df <- readHTMLTable(weekly_df, header=T)
 weekly_df <- as.data.frame(weekly_df)
-names(weekly_df) <- c("Hour","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
+names(weekly_df) <- c("Day","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
 #weekly_df[25:27,1:8]
 ```
 ### **1. 개    요**
@@ -298,16 +298,22 @@ browser.get(url_1)
 html = browser.page_source
 soup = BeautifulSoup(html, 'html.parser')
 
-# 최신 게시물로 들어가서 저자된 파일 주로를 가져온다.
+#최신 게시물로 들어가서 저자된 파일 주로를 가져온다.
 file = soup.find("tbody")
-file_temp = file.find("a")
 
-# 파일주소 추출
-file = file_temp['href']
+# 20191208 에너지공단 홈페이지에 자료가 jpg와 pdf가 함께 게시되어 pdf파일을 골라 다운로드하는 프로그램으로 수정함
+file_temp=file.find_all("a")
 
-# 파일이름 추출
-file_name =file_temp.text
+for i in range(0,len(file_temp)) :
+    file_names = file_temp[i].text
+    if file_names[-5:-1] == ".pdf" :
+        file_name = file_names
+        file = file_temp[i]['href']
+        break
 
+file_name = file_name.replace(" ", "")
+
+        
 # 파일주소
 file_url = 'http://onerec.kmos.kr' + file
 
@@ -568,13 +574,13 @@ jpeg(width = 1000, height = 450, filename = "./rec_trend.jpg")
 
 par(mar = c(5, 4, 4, 6) + 0.1)
 plot(rec_raw[,3], type = "l", pch = 2, col = "blue", axes = FALSE, xlab = "", 
-    ylab = "",xlim=c(0,276),ylim = c(0, 250000))
+    ylab = "",xlim=c(0,312),ylim = c(0, 250000))
 axis(side = 2, col = "blue", col.axis = "blue")
 mtext("거래단가(원/REC)", side = 2, line = 2.5,col ="blue")
 box()
 par(new = TRUE)
 plot(rec_raw[,4], type = "h", pch = 1, col = "red", axes = FALSE, xlab = "", 
-    ylab = "",xlim=c(0,276),ylim = c(0, 300000))
+    ylab = "",xlim=c(0,312),ylim = c(0, 300000))
 #axis(side = 1, at = 2010:2013, labels = year)
 #mtext("Year", side = 1, line = 2)
 axis(side = 4, col = "red", col.axis = "red")
@@ -806,7 +812,7 @@ for link in links:
         
     except :
         pass
-    time.sleep(1)
+    time.sleep(0.5)
     if i==100:
        break
     
