@@ -43,7 +43,7 @@ names(weekly_df) <- c("Day","D-6","D-5","D-4","D-3","D-2","D-1","D-day")
 본 Report는 한국전력거래소의 I-SMART 에서 제공하는 전력거래 단가 실적중 SMP의 가중 평균을 Web Crawling을 이용하여 자료수집 및 분석을 하였으며, REC는 신재생원스톱 사업종별 통합포털의 현물시장 속보를 이용하여 현물시장에서 거래되는 REC의 단가 및 거래량을 분석하였습니다.
 국제유가의 경우 2019년도 1월부터 한국석유공사의 국제유가 현황을 참고하여 매주 마지막일자의 DUBAI/WTI/BRENT유의 국제원유가격을 기준으로 기록하였습니다.
 
-SMP자료는 2015년도부터 현재까지 월별 거래현황을 분석하여 나타내었으며, 최근 1주일간 시간대별 SMP의 거래가격등을 분석하였습니다.
+SMP자료는 2016년도부터 현재까지 월별 거래현황을 분석하여 나타내었으며, 최근 1주일간 시간대별 SMP의 거래가격등을 분석하였습니다.
 REC는 2016년 3월부터 현재까지 월별 거래현황을 분석하였으며, 거래단가의 허수를 검토/판단하기 위하여 거래량까지 그래프로 분석하여 나타내었습니다.  
   
 SMP의 경우 거래량을 전량 판매가 가능한 시스템으로 되어 있으나, 현물시장에서 REC의 경우 발전사인 구매자와 발전사업자인 판매자의 사이에서 거래가 이루어지므로 판매단가가 어느정도 유지되더라도 거래량이 적을 수 있으므로 특히 사업을 준비하거나 경제성분석을 하고자 하는 경우에는 신중할 필요성이 있습니다.  
@@ -133,8 +133,8 @@ library(dplyr)
 #names(smp_day) < c("smp"","num_dat"")
 smp_avg_monthly <- as.data.frame(matrix(nrow=6,ncol=14))
 names(smp_avg_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
-smp_avg_monthly$year <- c("2015","2016","2017","2018","2019","avg")
-monthly_year <- 2015
+smp_avg_monthly$year <- c("2016","2017","2018","2019","2020","avg")
+monthly_year <- 2016
 for (monthly_count in 1:12 ) {
    #monthly_count <- 12
    avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
@@ -148,7 +148,7 @@ for (monthly_count in 1:12 ) {
    monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
    smp_avg_monthly[1,avg_col] <- round(mean(monthly_df[,1]),digits=2)
 }
-monthly_year <- 2016
+monthly_year <- 2017
 for (monthly_count in 1:12 ) {
    #monthly_count <- 12
    avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
@@ -162,7 +162,7 @@ for (monthly_count in 1:12 ) {
    monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
    smp_avg_monthly[2,avg_col] <- round(mean(monthly_df[,1]), digits=2)
 }
-monthly_year <- 2017
+monthly_year <- 2018
 for (monthly_count in 1:12 ) {
    #monthly_count <- 12
    avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
@@ -176,7 +176,7 @@ for (monthly_count in 1:12 ) {
    monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
    smp_avg_monthly[3,avg_col] <- round(mean(monthly_df[,1]), digits=2)
 }
-monthly_year <- 2018
+monthly_year <- 2019
 for (monthly_count in 1:12 ) {
    #monthly_count <- 12
    avg_start <- unclass(as.Date(paste0(monthly_year,"-",monthly_count,"-","01")))
@@ -190,7 +190,7 @@ for (monthly_count in 1:12 ) {
    monthly_df <- filter(smp_day, V2 >= avg_start, V2 < avg_end)
    smp_avg_monthly[4,avg_col] <- round(mean(monthly_df[,1]), digits=2)
 }
-monthly_year <- 2019
+monthly_year <- 2020
 monthly_count_end <- as.numeric(format(Sys.Date(),"%m"))
 for (monthly_count in 1:monthly_count_end ) {
    #monthly_count <- 12
@@ -218,8 +218,8 @@ for (monthly_count in 1:6) {
 ```
 
 
-#### **2.2 월별 SMP 현황 (2015년~현재)**  
-년간 월별 평균 SMP 단가를 분석하였으며, 2015년부터 현재까지 월별 평균 단가도 함께 분석하였습니다.  
+#### **2.2 월별 SMP 현황 (2016년~현재)**  
+년간 월별 평균 SMP 단가를 분석하였으며, 2016년부터 현재까지 월별 평균 단가도 함께 분석하였습니다.  
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE,comment=NA}
 #install.packages("pander")
@@ -231,26 +231,26 @@ kable(smp_avg_monthly, digits = 1,"latex",booktabs = T,align = "r") %>%
 
 ```
   
-#### **2.3 SMP 일별현황 (2015년~현재)**  
-2015년부터 현재까지 SMP 일별 평균 단가의 Trend를 분석하였습니다.
+#### **2.3 SMP 일별현황 (2016년~현재)**  
+2016년부터 현재까지 SMP 일별 평균 단가의 Trend를 분석하였습니다.
   
 ```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA,results='hide'}
 
 #그래프를 저장할 경로 및 파일명 입력
 jpeg(width = 1000, height = 500, filename = "smp_trend.jpg")
-
-plot(smp_day[,1],type="l",xlim=c(0,1825), ylim=c(0,200), col="red", ylab="SMP(System Marginal Price) (KRW/kW)",xlab="", xaxt="n")+grid()
+smp_len <- length(smp_day[,1])
+plot(smp_day[366:smp_len,1],type="l",xlim=c(0,1825), ylim=c(0,200), col="red", ylab="SMP(System Marginal Price) (KRW/kW)",xlab="", xaxt="n")+grid()
 abline(v=365,col="blue",lty=1)
 abline(v=365*2,col="blue",lty=1)
 abline(v=365*3,col="blue",lty=1)
 abline(v=365*4,col="blue",lty=1)
 
 abline()
-text(365/2,0,labels = "2015년")
-text(365+(365/2),0,labels = "2016년")
-text(365+365+(365/2),0,labels = "2017년")
-text(365+365+365+(365/2),0,labels = "2018년")
-text(365+365+365+365+(365/2),0,labels = "2019년")
+text(365/2,0,labels = "2016년")
+text(365+(365/2),0,labels = "2017년")
+text(365+365+(365/2),0,labels = "2018년")
+text(365+365+365+(365/2),0,labels = "2019년")
+text(365+365+365+365+(365/2),0,labels = "2020년")
 
 # 그래픽 device를 off시킨다.
 dev.off()
@@ -335,7 +335,7 @@ rec_data = wrapper.read_pdf(file_name, spreadsheet=True, area=(200, 40, 472.85, 
 rec_data.columns = ["sale_date"]
 
 rec_data.columns = ["sale_date"]
-if (file_name[0:2] == '20'):
+if (file_name[0:2] == '2020'):  #년도가 2020년도로 변경됨에 따라 년도인식이 앞의 20자리와 뒤의 20자리가 동일하여 2020으로 인식할 수 있도록 수정(20200112)
     rec_data.iloc[0,0] = file_name[0:4] +'-'+ rec_data.iloc[0,0].replace('월',"-").replace('일',"-")[0:-4]
     rec_data.iloc[1,0] = file_name[0:4] +'-'+ rec_data.iloc[1,0].replace('월',"-").replace('일',"-")[0:-4]
 else :
@@ -440,9 +440,9 @@ rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
 rec_raw_length <- nrow(rec_raw)
 rec_raw$sale_date <- as.Date(rec_raw$sale_date)
 library(dplyr)
-rec_monthly  <- as.data.frame(matrix(nrow=5,ncol=14))
+rec_monthly  <- as.data.frame(matrix(nrow=6,ncol=14))
 names(rec_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
-rec_monthly$year <- c("2016","2017","2018","2019","avg")
+rec_monthly$year <- c("2016","2017","2018","2019",2020,"avg")
 p_temp <- as.POSIXlt(Sys.Date())
 now_year_temp <- p_temp$year+1900
 now_month_temp <- p_temp$mon+1
@@ -485,9 +485,9 @@ rec_raw <- read.table("./rec_price1.csv", sep=",",head=TRUE)
 rec_raw_length <- nrow(rec_raw)
 rec_raw$sale_date <- as.Date(rec_raw$sale_date)
 library(dplyr)
-rec_monthly  <- as.data.frame(matrix(nrow=5,ncol=14))
+rec_monthly  <- as.data.frame(matrix(nrow=6,ncol=14))
 names(rec_monthly) <- (c("year","1","2","3","4","5","6","7","8","9","10","11","12","avg"))
-rec_monthly$year <- c("2016","2017","2018","2019","avg")
+rec_monthly$year <- c("2016","2017","2018","2019","2020","avg")
 p_temp <- as.POSIXlt(Sys.Date())
 now_year_temp <- p_temp$year+1900
 now_month_temp <- p_temp$mon+1
@@ -517,9 +517,9 @@ rec_monthly[col_temp,row_temp] <- round(mean(rec_temp[,3]), digits=2)
   }
 }
 for(i in 1:12){
-    rec_monthly[5,i+1] <- mean(rec_monthly[,i+1],na.rm =TRUE)
+    rec_monthly[6,i+1] <- mean(rec_monthly[,i+1],na.rm =TRUE)
 }
-for (monthly_count in 1:5) {
+for (monthly_count in 1:6) {
 rec_monthly[monthly_count,14] <- mean(c(rec_monthly[monthly_count,2],rec_monthly[monthly_count,3],rec_monthly[monthly_count,4],rec_monthly[monthly_count,5],rec_monthly[monthly_count,6],rec_monthly[monthly_count,7],rec_monthly[monthly_count,8],rec_monthly[monthly_count,9],rec_monthly[monthly_count,10],rec_monthly[monthly_count,11],rec_monthly[monthly_count,12],rec_monthly[monthly_count,13]),na.rm=TRUE)    
 }
 ```
@@ -570,37 +570,40 @@ kable(table_temp,row.names = FALSE,digits = 0,"latex",booktabs = T, align = "l")
 ```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA,results='hide'}
 
 #그래프를 저장할 경로 및 파일명 입력
-jpeg(width = 1000, height = 450, filename = "./rec_trend.jpg")
+jpeg(width = 1000, height = 440, filename = "./rec_trend.jpg")
 
 par(mar = c(5, 4, 4, 6) + 0.1)
 plot(rec_raw[,3], type = "l", pch = 2, col = "blue", axes = FALSE, xlab = "", 
-    ylab = "",xlim=c(0,312),ylim = c(0, 250000))
+    ylab = "",xlim=c(0,412),ylim = c(0, 250000))
 axis(side = 2, col = "blue", col.axis = "blue")
 mtext("거래단가(원/REC)", side = 2, line = 2.5,col ="blue")
 box()
 par(new = TRUE)
 plot(rec_raw[,4], type = "h", pch = 1, col = "red", axes = FALSE, xlab = "", 
-    ylab = "",xlim=c(0,312),ylim = c(0, 300000))
+    ylab = "",xlim=c(0,412),ylim = c(0, 300000))
 #axis(side = 1, at = 2010:2013, labels = year)
 #mtext("Year", side = 1, line = 2)
 axis(side = 4, col = "red", col.axis = "red")
-mtext("REC 거래량(REC)", side = 4, col = "red", line = 2.5)
+#mtext("REC 거래량(REC)", side = 5, col = "red", line = 2.5)
 #legend("top", legend = c("REC 거래단가", "REC 거래량"), text.col = c("blue", "red"), pch = c(1,2), col = c("blue", "red"))
 
 abline(v=42,col="black",lty=1)
 abline(v=122,col="black",lty=1)
 abline(v=218,col="black",lty=1)
+abline(v=315,col="black",lty=1)
 
 abline()
 text(42/2,0,labels = "2016년")
 text((42+78/2),0,labels = "2017년")
 text((42+78+96/2),0,labels = "2018년")
 text((42+78+96+78/2),0,labels = "2019년")
+text((42+78+96+85+80),0,labels = "2020년")
 
 # 그래픽 device를 off시킨다.
 dev.off()
 
 ```
+
 
 ```{r,echo=FALSE, fig.width=11, fig.height=5, fig.align='center',message=FALSE,warning=FALSE,comment=NA}
 
@@ -614,13 +617,13 @@ include_graphics("./rec_trend.jpg")
 
 [REC 가중치]
 산업통산자원부가 정책의 방향, 환경영향, 온실가스 배출 저감, 발전원가, 기술개발 및 산업활성화에 미치는 영향 등을 고려하여 효율적 발전 등에 이점이 있는 발전소에 혜택을 주는 방식으로 원칙적으로 REC가중치는 3년마다 갱신됩니다.
-아래의 공급인증서 발급대상 설비기준은 2018년 6월 29일 개정된 내용을 기준으로 정리하였습니다.
+아래의 공급인증서 발급대상 설비기준은 2020년 7월 1일 개정된 내용을 발췌하였습니다.
 
 
 ```{r,echo=FALSE, out.width="97%", fig.align='center',message=FALSE,warning=FALSE,comment=NA}
 
 library(knitr)
-include_graphics("./REC_20180629.jpg")
+include_graphics("./REC_20200701.jpg")
 
 ```
 
@@ -661,7 +664,11 @@ items1=soup.find_all('dl', {'class': "dl_oil_coast"})
 oil=items1[0].text.strip('\n')
 oil=oil.split()
 
-for i in range(1,5) :
+#for i in range(1,5) :
+#    if oil[i]== "N.A" :
+#        oil[i] = 0
+
+for i in range(0,11) :
     if oil[i]== "N.A" :
         oil[i] = 0
 
@@ -749,7 +756,7 @@ oil_raw1 <- oil_raw[order(oil_raw$date),]
 #그래프를 저장할 경로 및 파일명 입력
 jpeg(width = 1000, height = 500, filename = "./oil_trend.jpg")  
 
-plot(oil_raw1[,2],type="l",xlim=c(0,52), ylim=c(0,100), col="red", ylab="OIL PRICE($/bbl)",xlab="2019년",xaxt="n",yaxt="n")
+plot(oil_raw1[,2],type="l",xlim=c(0,104), ylim=c(0,100), col="red", ylab="OIL PRICE($/bbl)",xlab="",xaxt="n",yaxt="n")
 
 #axis(1, at=1:max_data, lab=oil_raw1$date, cex.axis = 0.7)
 axis(2, cex.axis = 0.7)
@@ -760,16 +767,25 @@ lines(oil_raw1[,4],type="l", col="green")
 abline(v=13,col="black",lty=2)
 abline(v=26,col="black",lty=2)
 abline(v=39,col="black",lty=2)
+abline(v=52,col="black",lty=1)
+abline(v=65,col="black",lty=2)
+abline(v=78,col="black",lty=2)
+abline(v=91,col="black",lty=2)
+
 abline(h=50,col="black",lty=2)
 abline(h=55,col="red",lty=2)
 abline(h=60,col="black",lty=2)
 abline(h=65,col="black",lty=2)
 abline(h=70,col="black",lty=2)
 abline()
-text(13/2,-1,labels = "1Q")
-text(13+13/2,-1,labels = "2Q")
-text(13+13+13/2,-1,labels = "3Q")
-text(13+13+13+13/2,-1,labels = "4Q")
+text(13/2,-1,labels = "2019-1Q")
+text(13+13/2,-1,labels = "2019-2Q")
+text(13+13+13/2,-1,labels = "2019-3Q")
+text(13+13+13+13/2,-1,labels = "2019-4Q")
+text(13+13+13+13+13/2,-1,labels = "2020-1Q")
+text(13+13+13+13+13+13/2,-1,labels = "2020-2Q")
+text(13+13+13+13+13+13+13/2,-1,labels = "2020-3Q")
+text(13+13+13+13+13+13+13+13/2,-1,labels = "2020-4Q")
 
 # 그래픽 device를 off시킨다.
 dev.off()
@@ -825,7 +841,7 @@ tokens_ko = [n for n in tokens_ko if len(n) > 1]
 
 
 # 분석에 불필요한 단어 삭제 
-stop_words = ['에너지','분야','통해','위해','라며','한국',"사업",'대한','연합뉴스']
+stop_words = ['에너지','분야','통해','위해','라며','한국',"사업",'대한','연합뉴스','가나다','라마','바사','지역','활용','확대','추진','또한','지난','경우','정부','신문','이후','관련','최근','크게','기자']
 tokens_ko = [each_word for each_word in tokens_ko if each_word not in stop_words]
 
 
